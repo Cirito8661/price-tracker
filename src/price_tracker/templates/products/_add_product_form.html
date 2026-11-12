@@ -1,0 +1,47 @@
+{% from "macros.html" import csrf_field %}
+{% set errors = form_errors|default({}) %}
+{% set values = form_values|default({}) %}
+
+<section class="card form-card" id="add-product-form">
+  <div class="card-header">
+    <div>
+      <h2>Add a product</h2>
+      <p class="muted">The URL is validated, then the initial price is fetched with Playwright. If the check fails, the product is saved with an error status.</p>
+    </div>
+  </div>
+
+  <form method="post" action="{{ url_for('products_create') }}"
+        hx-post="{{ url_for('products_create') }}"
+        hx-target="#add-product-form"
+        hx-swap="outerHTML">
+    {{ csrf_field(csrf_token) }}
+
+    <div class="form-grid">
+      <label class="field">
+        <span class="field-label">Product URL</span>
+        <input class="input" type="url" name="url"
+               value="{{ values.get('url', '') }}"
+               placeholder="https://books.toscrape.com/catalogue/..."
+               autocomplete="off" required>
+        {% if errors.get('url') %}
+        <span class="field-error">{{ errors['url'] }}</span>
+        {% endif %}
+      </label>
+
+      <label class="field">
+        <span class="field-label">Target price <span class="muted">(optional)</span></span>
+        <input class="input" type="text" inputmode="decimal" name="target_price"
+               value="{{ values.get('target_price', '') }}"
+               placeholder="40.00">
+        {% if errors.get('target_price') %}
+        <span class="field-error">{{ errors['target_price'] }}</span>
+        {% endif %}
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Add product</button>
+      <span class="muted">Only supported stores are accepted. The first check may fail if the store is unavailable.</span>
+    </div>
+  </form>
+</section>

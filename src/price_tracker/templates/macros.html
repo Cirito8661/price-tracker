@@ -1,0 +1,24 @@
+{% macro csrf_field(token) -%}
+<input type="hidden" name="csrf_token" value="{{ token }}">
+{%- endmacro %}
+
+{% macro scrape_badge(product) -%}
+{% set status = product.scrape_status.value %}
+<span class="badge badge-{{ status }}">
+  {%- if status == 'ok' -%}Checked
+  {%- elif status == 'error' -%}Error
+  {%- else -%}Awaiting check
+  {%- endif -%}
+</span>
+{%- endmacro %}
+
+{% macro monitoring_badge(product) -%}
+<span class="badge badge-{{ 'on' if product.is_active else 'off' }}">
+  {{- 'Monitoring' if product.is_active else 'Paused' -}}
+</span>
+{%- endmacro %}
+
+{% macro change_badge(change_type) -%}
+{% set value = change_type.value %}
+<span class="badge badge-change">{{ value|replace('_', ' ')|title }}</span>
+{%- endmacro %}

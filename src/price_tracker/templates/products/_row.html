@@ -1,0 +1,42 @@
+{% from "macros.html" import csrf_field, scrape_badge, monitoring_badge %}
+
+<tr id="product-row-{{ product.id }}">
+  <td>
+    <a class="product-link" href="{{ url_for('product_detail', product_id=product.id) }}">
+      {{ product.name or 'Untitled product' }}
+    </a>
+    <span class="muted block">{{ product.url|url_host }}</span>
+  </td>
+  <td><span class="muted">{{ product.store|store_label }}</span></td>
+  <td>{{ product.current_price|format_price(product.currency) }}</td>
+  <td>{{ product.target_price|format_price(product.currency) }}</td>
+  <td>
+    <span class="badge-group">{{ scrape_badge(product) }} {{ monitoring_badge(product) }}</span>
+  </td>
+  <td class="muted">{{ product.last_checked_at|format_datetime }}</td>
+  <td class="align-right">
+    <div class="actions">
+      <a class="btn btn-ghost btn-small" href="{{ url_for('product_detail', product_id=product.id) }}">View</a>
+
+      <form method="post" action="{{ url_for('product_toggle', product_id=product.id) }}"
+            hx-post="{{ url_for('product_toggle', product_id=product.id) }}"
+            hx-target="#product-row-{{ product.id }}"
+            hx-swap="outerHTML">
+        {{ csrf_field(csrf_token) }}
+        <input type="hidden" name="next" value="/products">
+        <button class="btn btn-ghost btn-small" type="submit">
+          {{ 'Pause' if product.is_active else 'Resume' }}
+        </button>
+      </form>
+
+      <form method="post" action="{{ url_for('product_delete', product_id=product.id) }}"
+            hx-post="{{ url_for('product_delete', product_id=product.id) }}"
+            hx-target="#product-row-{{ product.id }}"
+            hx-swap="outerHTML"
+            hx-confirm="Delete this product and its price history?">
+        {{ csrf_field(csrf_token) }}
+        <button class="btn btn-danger btn-small" type="submit">Delete</button>
+      </form>
+    </div>
+  </td>
+</tr>

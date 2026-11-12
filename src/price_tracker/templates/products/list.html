@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <p class="eyebrow">Inventory</p>
+    <h1>Products</h1>
+    <p class="muted">Add product URLs and manage their monitoring state.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="#add-product">Jump to form</a>
+  </div>
+</div>
+
+{% if created and scrape == 'ok' %}
+<div class="alert alert-success" role="status">
+  Product added and its initial price was extracted successfully.
+</div>
+{% elif created and scrape == 'failed' %}
+<div class="alert alert-warning" role="status">
+  Product added, but the initial price check failed. Open the product details to review the error.
+</div>
+{% elif created %}
+<div class="alert alert-success" role="status">
+  Product added.
+</div>
+{% endif %}
+{% if deleted %}
+<div class="alert alert-success" role="status">
+  Product deleted.
+</div>
+{% endif %}
+
+{% include "products/_add_product_form.html" %}
+
+<section class="card table-card">
+  <div class="card-header">
+    <div>
+      <h2>Tracked products</h2>
+      <p class="muted">{{ products|length }} product{% if products|length != 1 %}s{% endif %} in this local database.</p>
+    </div>
+  </div>
+
+  {% if products %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th scope="col">Product</th>
+          <th scope="col">Store</th>
+          <th scope="col">Current price</th>
+          <th scope="col">Target</th>
+          <th scope="col">Status</th>
+          <th scope="col">Last check</th>
+          <th scope="col" class="align-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+          {% include "products/_row.html" %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <span class="empty-icon" aria-hidden="true">◎</span>
+    <h3>No products tracked</h3>
+    <p>Use the form above to add the first product URL.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

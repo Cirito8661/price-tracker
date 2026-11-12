@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="card error-page">
+  <span class="error-code">{{ error_code }}</span>
+  <h1>{{ error_title }}</h1>
+  <p class="muted">{{ error_message }}</p>
+  <div class="page-actions">
+    <a class="btn btn-primary" href="{{ url_for('dashboard') }}">Back to dashboard</a>
+    <a class="btn btn-ghost" href="{{ url_for('products_list') }}">Products</a>
+  </div>
+</section>
+{% endblock %}

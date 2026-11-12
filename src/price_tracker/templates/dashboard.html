@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% from "macros.html" import scrape_badge, monitoring_badge %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <p class="eyebrow">Overview</p>
+    <h1>Dashboard</h1>
+    <p class="muted">A local view of tracked products and monitoring status.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-primary" href="{{ url_for('products_list') }}#add-product">Add product</a>
+  </div>
+</div>
+
+<section class="stats-grid" aria-label="Monitoring summary">
+  <article class="stat-card">
+    <span class="stat-label">Tracked products</span>
+    <strong class="stat-value" data-stat="total">{{ summary.total_products }}</strong>
+    <span class="stat-hint">Saved product URLs</span>
+  </article>
+  <article class="stat-card">
+    <span class="stat-label">Active monitoring</span>
+    <strong class="stat-value" data-stat="active">{{ summary.active_products }}</strong>
+    <span class="stat-hint">Products with monitoring enabled</span>
+  </article>
+  <article class="stat-card">
+    <span class="stat-label">Awaiting first check</span>
+    <strong class="stat-value" data-stat="awaiting">{{ summary.awaiting_first_check }}</strong>
+    <span class="stat-hint">No price recorded yet</span>
+  </article>
+  <article class="stat-card">
+    <span class="stat-label">Recent decreases</span>
+    <strong class="stat-value" data-stat="decreases">{{ summary.recent_decrease_count }}</strong>
+    <span class="stat-hint">Last {{ settings.recent_decrease_days }} days</span>
+  </article>
+</section>
+
+<div class="dashboard-grid">
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2>Recent products</h2>
+        <p class="muted">Latest products added to the tracker.</p>
+      </div>
+      <a class="btn btn-ghost btn-small" href="{{ url_for('products_list') }}">View all</a>
+    </div>
+
+    {% if summary.products %}
+    <ul class="product-list">
+      {% for product in summary.products %}
+      <li class="product-list-item">
+        <div class="product-list-main">
+          <a class="product-link" href="{{ url_for('product_detail', product_id=product.id) }}">
+            {{ product.name or 'Untitled product' }}
+          </a>
+          <span class="muted block">{{ product.url|url_host }} · {{ product.store|store_label }}</span>
+        </div>
+        <div class="product-list-meta">
+          <span>{{ product.current_price|format_price(product.currency) }}</span>
+          <span class="badge-group">{{ scrape_badge(product) }} {{ monitoring_badge(product) }}</span>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state">
+      <span class="empty-icon" aria-hidden="true">+</span>
+      <h3>No products yet</h3>
+      <p>Add a product URL to start building the local tracker.</p>
+      <a class="btn btn-primary" href="{{ url_for('products_list') }}#add-product">Add your first product</a>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2>Recent price changes</h2>
+        <p class="muted">Populated by manual price checks.</p>
+      </div>
+    </div>
+
+    {% if summary.recent_changes %}
+    <ul class="change-list">
+      {% for entry, product in summary.recent_changes %}
+      <li class="change-list-item">
+        <div>
+          <a class="product-link" href="{{ url_for('product_detail', product_id=product.id) }}">
+            {{ product.name or 'Untitled product' }}
+          </a>
+          <span class="muted block">{{ entry.checked_at|format_datetime }}</span>
+        </div>
+        <span>{{ entry.price|format_price(entry.currency) }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state compact">
+      <h3>No price checks yet</h3>
+      <p>Run a manual price check from a product page to populate this section.</p>
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2>Recent decreases</h2>
+        <p class="muted">Products that became cheaper recently.</p>
+      </div>
+    </div>
+
+    {% if summary.recent_decreases %}
+    <ul class="change-list">
+      {% for entry in summary.recent_decreases %}
+      <li class="change-list-item">
+        <div>
+          <a class="product-link" href="{{ url_for('product_detail', product_id=entry.product_id) }}">
+            {{ entry.product.name or 'Untitled product' }}
+          </a>
+          <span class="muted block">{{ entry.checked_at|format_datetime }}</span>
+        </div>
+        <span class="price-decrease">{{ entry.price|format_price(entry.currency) }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty-state compact">
+      <h3>No decreases recorded</h3>
+      <p>Price history will appear here once monitoring begins.</p>
+    </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

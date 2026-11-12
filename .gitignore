@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Python environment and local metadata
+pip-wheel-metadata/
+.pyright/
+.dmypy.json
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*
+secrets*
+
+# Runtime data and logs
+data/*
+!data/.gitkeep
+logs/*
+!logs/.gitkeep
+*.db
+*.sqlite3
+
+# Local editor files
+.idea/
+.vscode/
+*.swp
+
+# Playwright artifacts
+playwright-report/
+test-results/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+
+# Logs and local databases
+*.log
+*.sqlite

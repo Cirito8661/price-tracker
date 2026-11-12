@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf_field %}
+{% set values = form_values|default({}) %}
+{% set errors = form_errors|default({}) %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <p class="eyebrow">Configuration</p>
+    <h1>Settings</h1>
+    <p class="muted">Scheduler and email settings for this local installation.</p>
+  </div>
+</div>
+
+{% if saved %}
+<div class="alert alert-success" role="status">
+  Settings saved successfully.
+</div>
+{% endif %}
+
+{% if errors.get('_form') %}
+<div class="alert alert-error" role="alert">
+  {{ errors['_form'] }}
+</div>
+{% endif %}
+
+<section class="card form-card">
+  <div class="card-header">
+    <div>
+      <h2>Runtime settings</h2>
+      <p class="muted">
+        These values are stored in <code>data/runtime_settings.json</code>. Other settings remain in <code>.env</code>.
+      </p>
+    </div>
+  </div>
+
+  <form method="post" action="{{ url_for('settings_update') }}">
+    {{ csrf_field(csrf_token) }}
+
+    <div class="form-grid">
+      <label class="field">
+        <span class="field-label">Global check interval (seconds)</span>
+        <input class="input" type="number" name="check_interval_seconds"
+               min="300" step="1"
+               value="{{ values.get('check_interval_seconds', settings.check_interval_seconds) }}">
+        {% if errors.get('check_interval_seconds') %}
+        <span class="field-error">{{ errors['check_interval_seconds'] }}</span>
+        {% endif %}
+      </label>
+
+      <label class="field checkbox-field">
+        <span class="field-label">Email notifications</span>
+        <span class="checkbox-row">
+          <input type="checkbox" name="email_enabled"
+                 {% if values.get('email_enabled') %}checked{% endif %}>
+          <span>Enable SMTP email delivery</span>
+        </span>
+        {% if errors.get('email_enabled') %}
+        <span class="field-error">{{ errors['email_enabled'] }}</span>
+        {% endif %}
+      </label>
+    </div>
+
+    <div class="form-grid">
+      <label class="field">
+        <span class="field-label">SMTP host</span>
+        <input class="input" type="text" name="smtp_host"
+               value="{{ values.get('smtp_host', '') }}"
+               placeholder="smtp.example.com">
+        {% if errors.get('smtp_host') %}
+        <span class="field-error">{{ errors['smtp_host'] }}</span>
+        {% endif %}
+      </label>
+
+      <label class="field">
+        <span class="field-label">SMTP port</span>
+        <input class="input" type="number" name="smtp_port"
+               min="1" max="65535" step="1"
+               value="{{ values.get('smtp_port', '587') }}">
+        {% if errors.get('smtp_port') %}
+        <span class="field-error">{{ errors['smtp_port'] }}</span>
+        {% endif %}
+      </label>
+
+      <label class="field">
+        <span class="field-label">SMTP security</span>
+        <select class="input" name="smtp_security">
+          <option value="starttls" {% if values.get('smtp_security') == 'starttls' %}selected{% endif %}>STARTTLS (port 587)</option>
+          <option value="ssl" {% if values.get('smtp_security') == 'ssl' %}selected{% endif %}>SSL (port 465)</option>
+        </select>
+        {% if errors.get('smtp_security') %}
+        <span class="field-error">{{ errors['smtp_security'] }}</span>
+        {% endif %}
+      </label>
+
+      <label class="field">
+        <span class="field-label">SMTP username</span>
+        <input class="input" type="text" name="smtp_username"
+               value="{{ values.get('smtp_username', '') }}"
+               autocomplete="off">
+        {% if errors.get('smtp_username') %}
+        <span class="field-error">{{ errors['smtp_username'] }}</span>
+        {% endif %}
+      </label>
+
+      <label class="field">
+        <span class="field-label">SMTP password</span>
+        <input class="input" type="password" name="smtp_password"
+               value="" autocomplete="new-password"
+               placeholder="{% if runtime_password_configured %}Leave blank to keep current password{% else %}Optional{% endif %}">
+        {% if runtime_password_configured %}
+        <span class="muted">A password is configured and is never displayed.</span>
+        {% endif %}
+        {% if errors.get('smtp_password') %}
+        <span class="field-error">{{ errors['smtp_password'] }}</span>
+        {% endif %}
+      </label>
+
+      <label class="field">
+        <span class="field-label">From address</span>
+        <input class="input" type="email" name="smtp_from"
+               value="{{ values.get('smtp_from', '') }}"
+               placeholder="tracker@example.com">
+        {% if errors.get('smtp_from') %}
+        <span class="field-error">{{ errors['smtp_from'] }}</span>
+        {% endif %}
+      </label>
+
+      <label class="field">
+        <span class="field-label">To address</span>
+        <input class="input" type="email" name="smtp_to"
+               value="{{ values.get('smtp_to', '') }}"
+               placeholder="owner@example.com">
+        {% if errors.get('smtp_to') %}
+        <span class="field-error">{{ errors['smtp_to'] }}</span>
+        {% endif %}
+      </label>
+
+      <label class="field">
+        <span class="field-label">SMTP timeout (seconds)</span>
+        <input class="input" type="number" name="smtp_timeout_seconds"
+               min="1" step="1"
+               value="{{ values.get('smtp_timeout_seconds', '15') }}">
+        {% if errors.get('smtp_timeout_seconds') %}
+        <span class="field-error">{{ errors['smtp_timeout_seconds'] }}</span>
+        {% endif %}
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Save settings</button>
+      <span class="muted">Changes apply immediately. Scheduler changes are rescheduled without a restart.</span>
+    </div>
+  </form>
+</section>
+
+<div class="settings-grid">
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2>Scheduler</h2>
+        <p class="muted">Automatic global price sweeps.</p>
+      </div>
+      {% if scheduler_running %}
+      <span class="badge badge-ok">Running</span>
+      {% else %}
+      <span class="badge badge-off">Stopped</span>
+      {% endif %}
+    </div>
+    <dl class="detail-list">
+      <div><dt>Interval</dt><dd>{{ scheduler_interval_seconds }} seconds</dd></div>
+      <div><dt>Next run</dt><dd>{{ scheduler_next_run|format_datetime }}</dd></div>
+      <div><dt>Job count</dt><dd>One global sweep job</dd></div>
+      <div><dt>Overlap protection</dt><dd>Enabled</dd></div>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2>Email</h2>
+        <p class="muted">SMTP notification delivery.</p>
+      </div>
+      {% if email_effective %}
+      <span class="badge badge-ok">Enabled</span>
+      {% elif email_enabled %}
+      <span class="badge badge-pending">Disabled — incomplete SMTP</span>
+      {% else %}
+      <span class="badge badge-off">Disabled</span>
+      {% endif %}
+    </div>
+    <dl class="detail-list">
+      <div><dt>SMTP host</dt><dd>{{ settings.smtp_host or 'Not configured' }}</dd></div>
+      <div><dt>SMTP port</dt><dd>{{ settings.smtp_port }}</dd></div>
+      <div><dt>SMTP security</dt><dd>{{ settings.smtp_security }}</dd></div>
+      <div><dt>Password</dt><dd>{{ 'Configured' if runtime_password_configured else 'Not configured' }}</dd></div>
+      <div><dt>Notification cooldown</dt><dd>{{ settings.notification_cooldown_hours }} hours</dd></div>
+      <div><dt>Maximum attempts</dt><dd>{{ settings.max_notification_attempts }}</dd></div>
+    </dl>
+    {% if email_warning %}
+    <div class="alert alert-warning" role="status">
+      {{ email_warning }}
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2>Scraper</h2>
+      </div>
+    </div>
+    <dl class="detail-list">
+      <div><dt>Scraper timeout</dt><dd>{{ settings.scraper_timeout_ms }} ms</dd></div>
+      <div><dt>Scraper concurrency</dt><dd>{{ settings.scraper_concurrency }}</dd></div>
+      <div><dt>Minimum store delay</dt><dd>{{ settings.scraper_min_delay_seconds }} seconds</dd></div>
+      <div><dt>Maximum response size</dt><dd>{{ settings.scraper_max_response_bytes }} bytes</dd></div>
+      <div><dt>User agent</dt><dd class="break-word">{{ settings.scraper_user_agent }}</dd></div>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2>Security</h2>
+      </div>
+    </div>
+    <dl class="detail-list">
+      <div><dt>Allowed hosts</dt><dd>{{ settings.allowed_hosts|join(', ') }}</dd></div>
+      <div><dt>Allowed outbound ports</dt><dd>{{ settings.allowed_ports|join(', ') }}</dd></div>
+      <div><dt>CSRF protection</dt><dd>Enabled for state-changing requests</dd></div>
+      <div><dt>Signing secret</dt><dd>Configured (value hidden)</dd></div>
+      <div><dt>Local-only mode</dt><dd>Enabled; bind address must be a loopback address</dd></div>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2>Application</h2>
+      </div>
+    </div>
+    <dl class="detail-list">
+      <div><dt>Name</dt><dd>{{ settings.app_name }}</dd></div>
+      <div><dt>Version</dt><dd>{{ settings.app_version }}</dd></div>
+      <div><dt>Bind address</dt><dd>{{ settings.app_host }}:{{ settings.app_port }}</dd></div>
+      <div><dt>Public base URL</dt><dd class="break-word">{{ settings.public_base_url }}</dd></div>
+      <div><dt>Debug mode</dt><dd>{{ 'Enabled' if settings.app_debug else 'Disabled' }}</dd></div>
+      <div><dt>Log level</dt><dd>{{ settings.log_level }}</dd></div>
+    </dl>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2>Database</h2>
+      </div>
+    </div>
+    <dl class="detail-list">
+      <div><dt>Database URL</dt><dd class="break-word">{{ settings.effective_database_url }}</dd></div>
+      <div><dt>Database file</dt><dd class="break-word">{{ settings.database_path }}</dd></div>
+      <div><dt>Data directory</dt><dd class="break-word">{{ settings.data_dir }}</dd></div>
+      <div><dt>Log directory</dt><dd class="break-word">{{ settings.log_dir }}</dd></div>
+      <div><dt>Recent decrease window</dt><dd>{{ settings.recent_decrease_days }} days</dd></div>
+      <div><dt>Migrations</dt><dd>Managed explicitly with Alembic</dd></div>
+    </dl>
+  </section>
+</div>
+
+<p class="muted small-note">
+  Secret values, SMTP passwords, and generated signing keys are never displayed on this page.
+</p>
+{% endblock %}

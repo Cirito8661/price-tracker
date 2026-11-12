@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf_field, scrape_badge, monitoring_badge, change_badge %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <a class="back-link" href="{{ url_for('products_list') }}">← Back to products</a>
+    <p class="eyebrow">Product details</p>
+    <h1>{{ product.name or 'Untitled product' }}</h1>
+    <p class="muted break-word">{{ product.url }}</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-ghost" href="{{ product.url }}" target="_blank" rel="noopener noreferrer">
+      Open store page
+    </a>
+  </div>
+</div>
+
+{% if product.scrape_status.value == 'pending' %}
+<div class="alert alert-info" role="status">
+  This product is awaiting its first price check. Automatic recurring monitoring is not implemented in this stage.
+</div>
+{% elif product.scrape_status.value == 'error' and product.last_error %}
+<div class="alert alert-error" role="alert">
+  The last check failed: {{ product.last_error }}
+</div>
+{% endif %}
+
+{% if check == 'ok' %}
+<div class="alert alert-success" role="status">
+  Price check completed successfully.
+</div>
+{% elif check == 'failed' %}
+<div class="alert alert-warning" role="status">
+  Price check failed. Existing valid price data was preserved.
+</div>
+{% elif check == 'busy' %}
+<div class="alert alert-info" role="status">
+  A price check is already in progress for this product.
+</div>
+{% endif %}
+
+<div class="detail-grid">
+  <div class="detail-main">
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2>Price history</h2>
+          <p class="muted">A local chart of recorded prices.</p>
+        </div>
+        {% if chart.is_demo %}
+        <span class="badge badge-demo">Demo data</span>
+        {% endif %}
+      </div>
+
+      {% if chart.is_demo %}
+      <p class="muted chart-note">
+        No real price history exists yet. The chart uses clearly labeled placeholder values for layout testing and will be replaced after the first successful price check.
+      </p>
+      {% endif %}
+
+      <div class="chart-wrap">
+        <canvas id="price-history-chart"
+                data-labels='{{ chart.labels|tojson }}'
+                data-values='{{ chart.values|tojson }}'
+                data-currency="{{ product.currency or '' }}"
+                role="img"
+                aria-label="Price history chart"></canvas>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2>Recorded checks</h2>
+          <p class="muted">Successful price checks are stored here.</p>
+        </div>
+      </div>
+
+      {% if history %}
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col">Checked at</th>
+              <th scope="col">Price</th>
+              <th scope="col">Change</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entry in history|reverse %}
+            <tr>
+              <td>{{ entry.checked_at|format_datetime }}</td>
+              <td>{{ entry.price|format_price(entry.currency) }}</td>
+              <td>{{ change_badge(entry.change_type) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state compact">
+        <h3>No price checks recorded</h3>
+        <p>This product has no successful checks yet.</p>
+      </div>
+      {% endif %}
+    </section>
+  </div>
+
+  <aside class="detail-side">
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2>Summary</h2>
+        </div>
+      </div>
+
+      <dl class="detail-list">
+        <div>
+          <dt>Latest price</dt>
+          <dd>{{ summary.latest_price|format_price(summary.latest_currency) }}</dd>
+        </div>
+        <div>
+          <dt>Previous price</dt>
+          <dd>{{ summary.previous_price|format_price(summary.previous_currency) }}</dd>
+        </div>
+        <div>
+          <dt>Price change</dt>
+          <dd>
+            {% if summary.change_type %}
+              {{ change_badge(summary.change_type) }}
+              <span class="{% if summary.change_type.value == 'decrease' %}price-decrease{% elif summary.change_type.value == 'increase' %}price-increase{% else %}muted{% endif %}">
+                {{ summary.change_amount|format_change(summary.latest_currency) }}
+              </span>
+            {% else %}
+              <span class="muted">—</span>
+            {% endif %}
+          </dd>
+        </div>
+        <div>
+          <dt>Target price</dt>
+          <dd>{{ product.target_price|format_price(product.currency) }}</dd>
+        </div>
+        <div>
+          <dt>Currency</dt>
+          <dd>{{ product.currency or 'Not detected' }}</dd>
+        </div>
+        <div>
+          <dt>Store</dt>
+          <dd>{{ product.store|store_label }}</dd>
+        </div>
+        <div>
+          <dt>Scrape status</dt>
+          <dd>{{ scrape_badge(product) }}</dd>
+        </div>
+        <div>
+          <dt>Monitoring</dt>
+          <dd>{{ monitoring_badge(product) }}</dd>
+        </div>
+        <div>
+          <dt>Last successful check</dt>
+          <dd>{{ product.last_checked_at|format_datetime }}</dd>
+        </div>
+        <div>
+          <dt>Last attempt</dt>
+          <dd>{{ product.last_attempt_at|format_datetime }}</dd>
+        </div>
+        <div>
+          <dt>Created</dt>
+          <dd>{{ product.created_at|format_datetime }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2>Actions</h2>
+          <p class="muted">Changes apply to the local database immediately.</p>
+        </div>
+      </div>
+
+      <div class="stack">
+        <form method="post" action="{{ url_for('product_check', product_id=product.id) }}"
+              hx-post="{{ url_for('product_check', product_id=product.id) }}"
+              hx-target="#check-result"
+              hx-swap="innerHTML"
+              hx-indicator="#check-spinner"
+              hx-disabled-elt="find button">
+          {{ csrf_field(csrf_token) }}
+          <button class="btn btn-primary btn-full" type="submit">Check price now</button>
+          <span id="check-spinner" class="muted htmx-indicator">Checking…</span>
+        </form>
+        <div id="check-result"></div>
+
+        <form method="post" action="{{ url_for('product_toggle', product_id=product.id) }}">
+          {{ csrf_field(csrf_token) }}
+          <input type="hidden" name="next" value="/products/{{ product.id }}">
+          <button class="btn btn-ghost btn-full" type="submit">
+            {{ 'Pause monitoring' if product.is_active else 'Resume monitoring' }}
+          </button>
+        </form>
+
+        <form method="post" action="{{ url_for('product_delete', product_id=product.id) }}"
+              data-confirm="Delete this product and its price history?">
+          {{ csrf_field(csrf_token) }}
+          <button class="btn btn-danger btn-full" type="submit">Delete product</button>
+        </form>
+      </div>
+
+      <p class="muted small-note">
+        Automatic recurring checks and notifications are not implemented yet.
+      </p>
+    </section>
+  </aside>
+</div>
+{% endblock %}
