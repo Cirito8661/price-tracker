@@ -1,6 +1,41 @@
 # Price Tracker
 
-Local web application for automated product price monitoring.
+<p align="center">
+  <strong>Automated Product Price Monitoring</strong>
+  <br>
+  A local-first web application for tracking prices, monitoring changes and managing products.
+</p>
+
+<p align="center">
+  <a href="https://github.com/Cirito8661/price-tracker">
+    <img src="https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github" alt="GitHub Repository">
+  </a>
+  <img src="https://img.shields.io/badge/Python-3.12--3.14-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/FastAPI-Backend-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="MIT License">
+</p>
+
+Price Tracker is a portfolio project built with Python, FastAPI, SQLite, SQLAlchemy, Playwright and APScheduler.
+
+It combines browser automation, scheduled price checks, historical data storage and notifications in a modern, responsive web interface.
+
+The application runs locally on your computer and is accessed through your browser.
+
+## Screenshots
+
+### Dashboard
+![Dashboard](docs/dashboard.jpg)
+
+### Product Details
+![Product Details](docs/product-details.jpg)
+
+
+
+### Settings
+![Settings](docs/settings.jpg)
+
+---
+
 
 Price Tracker is a portfolio project built with Python, FastAPI, SQLite, SQLAlchemy,
 Jinja2, HTMX, Playwright, and APScheduler. The application is designed to run on the
@@ -47,7 +82,7 @@ contains:
 Final release documentation, screenshots, and repository publication preparation are
 not complete yet.
 
-## Features planned for v1.0
+## Key Features
 
 - Add and delete tracked products by URL.
 - Store product metadata and price history in SQLite.
@@ -60,19 +95,22 @@ not complete yet.
 - Responsive desktop and mobile layout.
 - Cross-platform support for Arch Linux and Windows 10/11.
 
-## Technology stack
+## Technology Stack
 
-- Python 3.12–3.14
-- FastAPI
-- Jinja2 and HTMX
-- SQLite and SQLAlchemy 2.0
-- Alembic
-- Pydantic and Pydantic Settings
-- APScheduler 3.x
-- Playwright
-- BeautifulSoup 4
-- Chart.js 4 (vendored locally)
-- pytest, pytest-asyncio, Ruff
+| Component | Technology |
+|---|---|
+| Language | Python 3.12–3.14 |
+| Backend | FastAPI |
+| Frontend | Jinja2, HTMX, CSS |
+| Browser Automation | Playwright |
+| HTML Parsing | BeautifulSoup |
+| Database | SQLite, SQLAlchemy 2.0 |
+| Migrations | Alembic |
+| Scheduler | APScheduler |
+| Charts | Chart.js |
+| Testing | pytest, pytest-asyncio |
+| Code Quality | Ruff |
+| CI/CD | GitHub Actions |
 
 ## Architecture overview
 
